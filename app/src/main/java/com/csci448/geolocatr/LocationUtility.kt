@@ -113,6 +113,10 @@ class LocationUtility(context: Context) {
         mIsLocationAvailableStateFlow.update { states?.isLocationUsable ?: false }
     }
 
+    fun setStartingLocation(location: Location?) {
+        mCurrentLocationStateFlow.value = location
+    }
+
     fun checkIfLocationCanBeRetrieved(
         activity: Activity,
         locationLauncher: ActivityResultLauncher<IntentSenderRequest>

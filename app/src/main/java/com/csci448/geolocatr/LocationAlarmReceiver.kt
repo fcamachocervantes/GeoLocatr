@@ -2,6 +2,9 @@ package com.csci448.geolocatr
 
 import android.app.Activity
 import android.app.AlarmManager
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -13,6 +16,8 @@ import android.provider.Settings
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat.startActivity
 import java.text.SimpleDateFormat
 import java.util.*
@@ -25,6 +30,11 @@ class LocationAlarmReceiver : BroadcastReceiver() {
         private const val ALARM_ACTION = "448_ACTION"
         private const val EXTRA_LATITUDE = "latitude"
         private const val EXTRA_LONGITUDE = "logitude"
+        private const val CHANNEL_ID = "LocationNotificationID"
+        private const val CHANNEL_NAME = "LocationChannel"
+        private const val CHANNEL_DESC = "This channel is used to notify about location"
+        var latitude = 0.0
+        var longitude = 0.0
         private fun createIntent(context: Context, location: Location?): Intent {
             val intent = Intent(context, LocationAlarmReceiver::class.java).apply {
                 action = ALARM_ACTION
@@ -71,16 +81,16 @@ class LocationAlarmReceiver : BroadcastReceiver() {
     fun checkPermissionAndScheduleAlarm( activity: Activity,  permissionLauncher: ActivityResultLauncher<String>) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             Log.d(LOG_TAG, "running on version tiramisu or newer, need permission")
-            if(activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            if(activity.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
                 Log.d(LOG_TAG, "have notification permission")
                 scheduleAlarm(activity)
             } else {
-                if (ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.POST_NOTIFICATIONS)) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(activity, android.Manifest.permission.POST_NOTIFICATIONS)) {
                     Log.d(LOG_TAG, "previously denied notification permission")
                     //display toast with reason
                 } else {
                     Log.d(LOG_TAG, "request notification permission")
-                    permissionLauncher.launch( Manifest.permission.POST_NOTIFICATIONS )
+                    permissionLauncher.launch( android.Manifest.permission.POST_NOTIFICATIONS )
                 }
             }
         } else {
@@ -92,10 +102,44 @@ class LocationAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(LOG_TAG, "received alarm for action ${intent.action}")
 
+        val startingLocation = Location("").apply {
+            latitude = lat
+            longitude = long
+        }
+
+        val deepLinkPendingIntent = MainActivity
+            .createPendingIntent(context, startingLocation)
+
         if (intent.action == ALARM_ACTION) {
-            val latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
-            val longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
+            latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
+            longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
             Log.d(LOG_TAG, "received our intent with $latitude / $longitude")
+        }
+
+        if(ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            Log.d(LOG_TAG, "have permission to post notifications")
+            val notificationManager = NotificationManagerCompat.from(context)
+
+            val channel =
+                NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = CHANNEL_DESC
+                }
+
+            notificationManager.createNotificationChannel(channel)
+
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_map)
+                .setContentTitle("You are here!")
+                .setContentText("You are at ${latitude} / ${longitude}")
+                .setContentIntent(deepLinkPendingIntent)
+                .setAutoCancel(true)
+                .build()
+
+            notificationManager.notify(0, notification)
         }
     }
 }

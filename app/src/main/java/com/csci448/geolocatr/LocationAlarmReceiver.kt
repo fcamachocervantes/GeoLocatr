@@ -33,8 +33,6 @@ class LocationAlarmReceiver : BroadcastReceiver() {
         private const val CHANNEL_ID = "LocationNotificationID"
         private const val CHANNEL_NAME = "LocationChannel"
         private const val CHANNEL_DESC = "This channel is used to notify about location"
-        var latitude = 0.0
-        var longitude = 0.0
         private fun createIntent(context: Context, location: Location?): Intent {
             val intent = Intent(context, LocationAlarmReceiver::class.java).apply {
                 action = ALARM_ACTION
@@ -102,44 +100,46 @@ class LocationAlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Log.d(LOG_TAG, "received alarm for action ${intent.action}")
 
-        val startingLocation = Location("").apply {
-            latitude = lat
-            longitude = long
-        }
-
-        val deepLinkPendingIntent = MainActivity
-            .createPendingIntent(context, startingLocation)
-
         if (intent.action == ALARM_ACTION) {
-            latitude = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
-            longitude = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
-            Log.d(LOG_TAG, "received our intent with $latitude / $longitude")
-        }
+            val lat = intent.getDoubleExtra(EXTRA_LATITUDE, 0.0)
+            val long = intent.getDoubleExtra(EXTRA_LONGITUDE, 0.0)
+            Log.d(LOG_TAG, "received our intent with $lat / $long")
 
-        if(ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            Log.d(LOG_TAG, "have permission to post notifications")
-            val notificationManager = NotificationManagerCompat.from(context)
+            if(ActivityCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                Log.d(LOG_TAG, "have permission to post notifications")
+                val notificationManager = NotificationManagerCompat.from(context)
 
-            val channel =
-                NotificationChannel(
-                    CHANNEL_ID,
-                    CHANNEL_NAME,
-                    NotificationManager.IMPORTANCE_DEFAULT
-                ).apply {
-                    description = CHANNEL_DESC
+                val channel =
+                    NotificationChannel(
+                        CHANNEL_ID,
+                        CHANNEL_NAME,
+                        NotificationManager.IMPORTANCE_DEFAULT
+                    ).apply {
+                        description = CHANNEL_DESC
+                    }
+
+                notificationManager.createNotificationChannel(channel)
+
+                val startingLocation = Location("").apply {
+                    latitude = lat
+                    longitude = long
                 }
 
-            notificationManager.createNotificationChannel(channel)
+                Log.d(LOG_TAG, "startingLocation: lat: ${startingLocation.latitude} long: ${startingLocation.longitude}")
 
-            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_dialog_map)
-                .setContentTitle("You are here!")
-                .setContentText("You are at ${latitude} / ${longitude}")
-                .setContentIntent(deepLinkPendingIntent)
-                .setAutoCancel(true)
-                .build()
+                val deepLinkPendingIntent = MainActivity
+                    .createPendingIntent(context, startingLocation)
 
-            notificationManager.notify(0, notification)
+                val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(android.R.drawable.ic_dialog_map)
+                    .setContentTitle("You are here!")
+                    .setContentText("You are at $lat / $long")
+                    .setContentIntent(deepLinkPendingIntent)
+                    .setAutoCancel(true)
+                    .build()
+
+                notificationManager.notify(0, notification)
+            }
         }
     }
 }

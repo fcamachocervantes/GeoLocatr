@@ -32,10 +32,12 @@ fun LocationScreen(location: Location?,
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 0f)
     }
 
+    val mapReadyState = remember { mutableStateOf(false) }
+
     val coroutineScope = rememberCoroutineScope()
 
     val context = LocalContext.current
-    LaunchedEffect(location) {
+    LaunchedEffect(location, mapReadyState.value) {
         if(location != null) {
             val bounds = LatLngBounds.Builder()
                 .include(LatLng(location.latitude, location.longitude))
@@ -119,7 +121,8 @@ fun LocationScreen(location: Location?,
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
             uiSettings = mapUiSettings,
-            properties = mapProperties
+            properties = mapProperties,
+            onMapLoaded = { mapReadyState.value = true }
         ) {
             if(location != null) {
                 val markerState = MarkerState().apply {

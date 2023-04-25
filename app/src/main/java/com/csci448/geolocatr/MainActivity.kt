@@ -57,8 +57,7 @@ class MainActivity : ComponentActivity() {
             }
             return uriStringBuilder.toString()
         }
-        fun createPendingIntent(context: Context, location: Location):
-                PendingIntent {
+        fun createPendingIntent(context: Context, location: Location): PendingIntent {
             val deepLinkIntent = Intent(
                 Intent.ACTION_VIEW,
                 formatUriString(location).toUri(),

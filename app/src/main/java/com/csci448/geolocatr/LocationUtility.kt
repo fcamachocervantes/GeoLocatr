@@ -114,7 +114,7 @@ class LocationUtility(context: Context) {
     }
 
     fun setStartingLocation(location: Location?) {
-        mCurrentLocationStateFlow.value = location
+        mCurrentLocationStateFlow.update { location }
     }
 
     fun checkIfLocationCanBeRetrieved(

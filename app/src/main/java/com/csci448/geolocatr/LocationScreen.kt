@@ -19,14 +19,14 @@ import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.maps.android.compose.*
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 fun LocationScreen(location: Location?,
                    locationAvailable: Boolean,
                    onGetLocation: () -> Unit,
-                   address: String ){
+                   address: String,
+                   onNotify: (Location) -> Unit){
 
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 0f)
@@ -104,9 +104,17 @@ fun LocationScreen(location: Location?,
         Button(
             enabled = locationAvailable,
             onClick = onGetLocation
-        ){
+        ) {
             Text(text = "Get Current Location")
         }
+        Button(
+            enabled = (location != null),
+            onClick = { onNotify(location!!) }
+        ) {
+            Text(text = "Notify Me Later.")
+        }
+
+
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState,
@@ -142,6 +150,7 @@ private fun PreviewLocationScreen() {
             }
             addressState.value = "Singapore"
         },
-        address = addressState.value
+        address = addressState.value,
+        {}
     )
 }

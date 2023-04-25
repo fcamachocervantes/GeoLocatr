@@ -1,6 +1,7 @@
 package com.csci448.geolocatr
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
@@ -21,6 +22,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var locationUtility: LocationUtility
     private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
     private lateinit var locationLauncher: ActivityResultLauncher<IntentSenderRequest>
+    private val locationAlarmReceiver = LocationAlarmReceiver()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +74,11 @@ class MainActivity : ComponentActivity() {
                             locationUtility.checkPermissionAndGetLocation(this@MainActivity,
                                                                                     permissionLauncher)
                         },
-                        address = addressState.value
+                        address = addressState.value,
+                        onNotify = { lastLocation ->
+                            locationAlarmReceiver.lastLocation = lastLocation
+                            locationAlarmReceiver.scheduleAlarm(this@MainActivity)
+                        }
                     )
                 }
             }

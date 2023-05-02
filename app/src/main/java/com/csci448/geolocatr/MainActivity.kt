@@ -53,6 +53,12 @@ class MainActivity : ComponentActivity() {
             if(location == null) {
                 uriStringBuilder.append("{$ARG_LATITUDE}")
             } else {
+                uriStringBuilder.append(location.latitude)
+            }
+            uriStringBuilder.append("/")
+            if(location == null) {
+                uriStringBuilder.append("{$ARG_LONGITUDE}")
+            } else {
                 uriStringBuilder.append(location.longitude)
             }
             return uriStringBuilder.toString()
